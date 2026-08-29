@@ -1,0 +1,16 @@
+# Example Delivery Standards
+
+This is a synthetic example document for demonstrating the RAG pipeline.
+It does not contain real company standards.
+
+1. Order completeness
+Before handing an order to the customer, the courier must verify that the order is complete.
+
+2. Package integrity
+The courier must check that the package is properly closed and has no visible damage.
+
+3. Delivery equipment
+The courier must use the required delivery bag or thermal container when transporting an order.
+
+4. Customer communication
+The courier must communicate with the customer politely and use professional language.
