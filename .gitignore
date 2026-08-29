@@ -35,3 +35,7 @@ build/
 /mvnw
 /.mvn/wrapper/maven-wrapper.properties
 /.gitattributes
+
+### Local configuration and knowledge base ###
+.env
+data/delivery-standards.txt
