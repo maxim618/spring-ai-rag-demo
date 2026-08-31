@@ -40,6 +40,4 @@ build/
 .env
 data/delivery-standards.txt
 /data/checklist-knowledge-base.json
-
-data/checklist-knowledge-base.json
 src/main/resources/screenshots/
