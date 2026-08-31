@@ -39,3 +39,4 @@ build/
 ### Local configuration and knowledge base ###
 .env
 data/delivery-standards.txt
+/data/checklist-knowledge-base.json
