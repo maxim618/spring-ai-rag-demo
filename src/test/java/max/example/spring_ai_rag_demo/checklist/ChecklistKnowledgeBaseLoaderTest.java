@@ -19,10 +19,28 @@ class ChecklistKnowledgeBaseLoaderTest {
         ChecklistKnowledgeBase knowledgeBase = loader.load();
 
         assertThat(knowledgeBase.questions()).hasSize(3);
-        assertThat(knowledgeBase.questions().get(0).questionId()).isEqualTo("Q-001");
-        assertThat(knowledgeBase.questions().get(0).options()).hasSize(4);
-        assertThat(knowledgeBase.questions().get(0).correctOptions()).containsExactly("A", "B", "D");
-        assertThat(knowledgeBase.questions().get(1).type()).isEqualTo("MULTIPLE_CHOICE");
-        assertThat(knowledgeBase.questions().get(1).correctOptions()).containsExactly("A", "C");
+
+        assertThat(knowledgeBase.questions().get(0).questionId())
+                .isEqualTo("Q-001");
+        assertThat(knowledgeBase.questions().get(0).type())
+                .isEqualTo("SINGLE_CHOICE");
+        assertThat(knowledgeBase.questions().get(0).options())
+                .hasSize(4);
+        assertThat(knowledgeBase.questions().get(0).correctOptions())
+                .containsExactly("A");
+
+        assertThat(knowledgeBase.questions().get(1).questionId())
+                .isEqualTo("Q-002");
+        assertThat(knowledgeBase.questions().get(1).type())
+                .isEqualTo("MULTIPLE_CHOICE");
+        assertThat(knowledgeBase.questions().get(1).correctOptions())
+                .containsExactly("A", "C");
+
+        assertThat(knowledgeBase.questions().get(2).questionId())
+                .isEqualTo("Q-003");
+        assertThat(knowledgeBase.questions().get(2).type())
+                .isEqualTo("MULTIPLE_CHOICE");
+        assertThat(knowledgeBase.questions().get(2).correctOptions())
+                .containsExactly("A", "C");
     }
 }
