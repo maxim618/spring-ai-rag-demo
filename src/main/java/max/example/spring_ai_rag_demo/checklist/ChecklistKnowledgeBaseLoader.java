@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.json.JsonMapper;
 
-import java.io.IOException;
 import java.nio.file.Path;
 
 @Component
@@ -27,7 +26,7 @@ public class ChecklistKnowledgeBaseLoader {
                     knowledgeFile.toFile(),
                     ChecklistKnowledgeBase.class
             );
-        } catch (IOException e) {
+        } catch (tools.jackson.core.JacksonException e) {
             throw new IllegalStateException(
                     "Failed to load checklist knowledge base: " + knowledgeFile,
                     e
