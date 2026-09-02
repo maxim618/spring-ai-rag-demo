@@ -2,6 +2,7 @@ package max.example.spring_ai_rag_demo.checklist;
 
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,11 @@ import java.util.List;
 import java.util.Map;
 
 @Component
+@ConditionalOnProperty(
+        name = "knowledge.vector-store.ingestion.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class ChecklistKnowledgeBaseVectorStoreLoader {
 
     private final ChecklistKnowledgeBaseLoader knowledgeBaseLoader;
