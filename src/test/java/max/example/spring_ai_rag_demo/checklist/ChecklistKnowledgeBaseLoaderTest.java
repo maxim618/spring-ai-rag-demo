@@ -1,7 +1,7 @@
 package max.example.spring_ai_rag_demo.checklist;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.nio.file.Path;
 
@@ -12,7 +12,7 @@ class ChecklistKnowledgeBaseLoaderTest {
     @Test
     void shouldLoadChecklistKnowledgeBase() {
         ChecklistKnowledgeBaseLoader loader = new ChecklistKnowledgeBaseLoader(
-                new ObjectMapper(),
+                JsonMapper.builder().build(),
                 Path.of("data/checklist-knowledge-base.example.json").toString()
         );
 
