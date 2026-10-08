@@ -7,8 +7,10 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Component
 @ConditionalOnProperty(
@@ -48,7 +50,12 @@ public class ChecklistKnowledgeBaseVectorStoreLoader {
                 .reduce((first, second) -> first + "\n" + second)
                 .orElse("");
 
+        String documentId = UUID.nameUUIDFromBytes(
+                question.questionId().getBytes(StandardCharsets.UTF_8)
+        ).toString();
+
         return new Document(
+                documentId,
                 content,
                 Map.of(
                         "questionId", question.questionId(),
