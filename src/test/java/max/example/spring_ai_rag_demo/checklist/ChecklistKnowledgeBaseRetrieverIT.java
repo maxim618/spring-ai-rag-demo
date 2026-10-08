@@ -31,6 +31,7 @@ class ChecklistKnowledgeBaseRetrieverIT {
             System.out.println(document.getText());
             System.out.println("Metadata:");
             System.out.println(document.getMetadata());
+            System.out.println("ID: " + document.getId());
         });
     }
 }
