@@ -5,9 +5,10 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.VectorStore;
 
 import java.util.List;
+import java.util.UUID;
+import java.nio.charset.StandardCharsets;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -53,5 +54,9 @@ class ChecklistKnowledgeBaseVectorStoreLoaderTest {
         assertThat(documents.get(0).getMetadata())
                 .containsEntry("questionId", "Q-001")
                 .containsEntry("type", "SINGLE_CHOICE");
+        assertThat(documents.get(0).getId())
+                .isEqualTo(UUID.nameUUIDFromBytes(
+                        "Q-001".getBytes(StandardCharsets.UTF_8)
+                ).toString());
     }
 }
