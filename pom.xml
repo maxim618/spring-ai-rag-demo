@@ -105,6 +105,13 @@
 				</configuration>
 			</plugin>
 
+			<plugin>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<configuration>
+					<argLine>@{argLine} -javaagent:${org.mockito:mockito-core:jar}</argLine>
+				</configuration>
+			</plugin>
+
 		</plugins>
 	</build>
 
