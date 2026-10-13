@@ -1,6 +1,7 @@
 package max.example.spring_ai_rag_demo.checklist;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.util.List;
 
@@ -26,12 +27,11 @@ class ChecklistKnowledgeBaseRetrieverIT {
         assertFalse(documents.isEmpty());
 
         documents.forEach(document -> {
-            System.out.println("-----");
-            System.out.println("Content:");
-            System.out.println(document.getText());
-            System.out.println("Metadata:");
-            System.out.println(document.getMetadata());
-            System.out.println("ID: " + document.getId());
+            assertNotNull(document.getId());
+            assertFalse(document.getId().isBlank());
+
+            assertNotNull(document.getMetadata().get("questionId"));
+            assertNotNull(document.getMetadata().get("type"));
         });
     }
 }
