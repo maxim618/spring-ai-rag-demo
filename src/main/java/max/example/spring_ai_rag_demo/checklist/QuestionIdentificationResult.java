@@ -1,14 +1,14 @@
-
 package max.example.spring_ai_rag_demo.checklist;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.OptionalDouble;
 
 public record QuestionIdentificationResult(
         Status status,
         String questionId,
         List<String> candidateQuestionIds,
-        Double confidence,
+        OptionalDouble confidence,
         Reason reason
 ) {
 
@@ -28,17 +28,21 @@ public record QuestionIdentificationResult(
 
     public QuestionIdentificationResult {
         Objects.requireNonNull(status, "status must not be null");
+        Objects.requireNonNull(
+                candidateQuestionIds,
+                "candidateQuestionIds must not be null"
+        );
+        Objects.requireNonNull(
+                confidence,
+                "confidence must not be null"
+        );
         Objects.requireNonNull(reason, "reason must not be null");
 
-        candidateQuestionIds = List.copyOf(
-                Objects.requireNonNull(
-                        candidateQuestionIds,
-                        "candidateQuestionIds must not be null"
-                )
-        );
+        candidateQuestionIds = List.copyOf(candidateQuestionIds);
 
-        if (candidateQuestionIds.stream()
-                .anyMatch(id -> id == null || id.isBlank())) {
+        if (candidateQuestionIds.stream().anyMatch(
+                id -> id == null || id.isBlank()
+        )) {
             throw new IllegalArgumentException(
                     "Candidate question IDs must not be blank"
             );
@@ -51,13 +55,14 @@ public record QuestionIdentificationResult(
             );
         }
 
-        if (confidence != null
-                && (!Double.isFinite(confidence)
-                || confidence < 0.0
-                || confidence > 1.0)) {
-            throw new IllegalArgumentException(
-                    "Confidence must be between 0.0 and 1.0"
-            );
+        if (confidence.isPresent()) {
+            double value = confidence.getAsDouble();
+
+            if (!Double.isFinite(value) || value < 0.0 || value > 1.0) {
+                throw new IllegalArgumentException(
+                        "Confidence must be between 0.0 and 1.0"
+                );
+            }
         }
 
         switch (status) {
