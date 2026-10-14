@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.OptionalDouble;
+
 class QuestionIdentificationResultTest {
 
     @Test
@@ -15,7 +17,7 @@ class QuestionIdentificationResultTest {
                 QuestionIdentificationResult.Status.IDENTIFIED,
                 "Q-001",
                 List.of("Q-001"),
-                null,
+                OptionalDouble.empty(),
                 QuestionIdentificationResult.Reason.NONE
         );
 
@@ -32,7 +34,7 @@ class QuestionIdentificationResultTest {
                 QuestionIdentificationResult.Status.AMBIGUOUS,
                 null,
                 List.of("Q-001", "Q-002"),
-                null,
+                OptionalDouble.empty(),
                 QuestionIdentificationResult.Reason.MULTIPLE_CANDIDATES
         );
 
@@ -46,7 +48,7 @@ class QuestionIdentificationResultTest {
                 QuestionIdentificationResult.Status.NOT_IDENTIFIED,
                 null,
                 List.of("Q-001"),
-                null,
+                OptionalDouble.empty(),
                 QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH
         );
 
@@ -65,7 +67,7 @@ class QuestionIdentificationResultTest {
                         QuestionIdentificationResult.Status.IDENTIFIED,
                         null,
                         List.of(),
-                        null,
+                        OptionalDouble.empty(),
                         QuestionIdentificationResult.Reason.NONE
                 )
         );
@@ -79,7 +81,7 @@ class QuestionIdentificationResultTest {
                         QuestionIdentificationResult.Status.AMBIGUOUS,
                         null,
                         List.of("Q-001"),
-                        null,
+                        OptionalDouble.empty(),
                         QuestionIdentificationResult.Reason.MULTIPLE_CANDIDATES
                 )
         );
@@ -93,7 +95,7 @@ class QuestionIdentificationResultTest {
                         QuestionIdentificationResult.Status.AMBIGUOUS,
                         "Q-001",
                         List.of("Q-001", "Q-002"),
-                        null,
+                        OptionalDouble.empty(),
                         QuestionIdentificationResult.Reason.MULTIPLE_CANDIDATES
                 )
         );
@@ -107,7 +109,7 @@ class QuestionIdentificationResultTest {
                         QuestionIdentificationResult.Status.NOT_IDENTIFIED,
                         "Q-001",
                         List.of("Q-001"),
-                        null,
+                        OptionalDouble.empty(),
                         QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH
                 )
         );
@@ -121,9 +123,35 @@ class QuestionIdentificationResultTest {
                         QuestionIdentificationResult.Status.IDENTIFIED,
                         "Q-001",
                         List.of("Q-001"),
-                        1.1,
+                        OptionalDouble.of(1.1),
                         QuestionIdentificationResult.Reason.NONE
                 )
         );
+    }
+
+    @Test
+    void shouldRepresentUnavailableConfidenceExplicitly() {
+        var result = new QuestionIdentificationResult(
+                QuestionIdentificationResult.Status.IDENTIFIED,
+                "Q-001",
+                List.of("Q-001"),
+                OptionalDouble.empty(),
+                QuestionIdentificationResult.Reason.NONE
+        );
+
+        assertTrue(result.confidence().isEmpty());
+    }
+
+    @Test
+    void shouldAcceptCalculatedConfidence() {
+        var result = new QuestionIdentificationResult(
+                QuestionIdentificationResult.Status.IDENTIFIED,
+                "Q-001",
+                List.of("Q-001"),
+                OptionalDouble.of(0.95),
+                QuestionIdentificationResult.Reason.NONE
+        );
+
+        assertEquals(0.95, result.confidence().orElseThrow());
     }
 }
