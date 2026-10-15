@@ -218,6 +218,10 @@ class ChecklistQuestionIdentifierTest {
     }
 
     private static Document document(String id, String text) {
-        return new Document(id, text, Map.of());
+        return new Document(
+                "document-" + id,
+                text,
+                Map.of("questionId", id)
+        );
     }
 }
