@@ -2,6 +2,7 @@ package max.example.spring_ai_rag_demo.checklist;
 
 import org.springframework.ai.document.Document;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -58,16 +59,17 @@ public final class ChecklistQuestionIdentifier {
     private static List<String> validateAndExtractIds(
             List<Document> documents
     ) {
+        List<String> ids = new ArrayList<>();
         Set<String> uniqueIds = new HashSet<>();
 
         for (Document document : documents) {
             Objects.requireNonNull(document, "candidate document must not be null");
 
-            String id = document.getId();
+            Object questionId = document.getMetadata().get("questionId");
 
-            if (id == null || id.isBlank()) {
+            if (!(questionId instanceof String id) || id.isBlank()) {
                 throw new IllegalArgumentException(
-                        "Candidate document ID must not be blank"
+                        "Candidate document must have a non-blank questionId metadata"
                 );
             }
 
@@ -76,9 +78,11 @@ public final class ChecklistQuestionIdentifier {
                         "Candidate document IDs must be unique"
                 );
             }
+
+            ids.add(id);
         }
 
-        return List.copyOf(uniqueIds);
+        return List.copyOf(ids);
     }
 
     private static boolean containsOnlyRetrievedIds(
