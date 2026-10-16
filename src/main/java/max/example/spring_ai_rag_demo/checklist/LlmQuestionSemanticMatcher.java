@@ -252,7 +252,7 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
     private record Candidate(String questionId, String text) {
     }
 
-    private enum Status {
+    enum Status {
         IDENTIFIED,
         AMBIGUOUS,
         NOT_IDENTIFIED
