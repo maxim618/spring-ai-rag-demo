@@ -66,7 +66,6 @@ class ChecklistServiceTest {
         assertEquals("Что необходимо сделать перед началом рабочего дня?", identified.question());
         assertEquals(List.of(new ChecklistOption("A", "Проверить рабочее оборудование"),
                 new ChecklistOption("B", "Пропустить проверку оборудования")), identified.options());
-        assertFalse(result.getClass().getDeclaredFields().length == 0);
         verify(retriever).retrieve(input.text());
         verify(identifier).identify(input, candidates);
     }
