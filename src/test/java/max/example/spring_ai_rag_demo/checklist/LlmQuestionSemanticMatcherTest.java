@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -103,6 +104,53 @@ class LlmQuestionSemanticMatcherTest {
 
         assertInstanceOf(QuestionIdentificationResult.NotIdentified.class, result);
     }
+
+    @Test
+    void shouldReturnNotIdentifiedWhenReasonIsMultipleCandidates() {
+        when(responseSpec.entity(
+                LlmQuestionSemanticMatcher.MatchDecision.class
+        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
+                LlmQuestionSemanticMatcher.Status.NOT_IDENTIFIED,
+                null,
+                List.of(),
+                "MULTIPLE_CANDIDATES",
+                0.2
+        ));
+
+        var result = matcher.match(
+                NormalizedChecklistQuestion.textOnly("Как оформить отпуск?"),
+                List.of(document("Q-001", "Проверьте упаковку"))
+        );
+
+        assertInstanceOf(QuestionIdentificationResult.NotIdentified.class, result);
+
+        var notIdentified = (QuestionIdentificationResult.NotIdentified) result;
+        assertEquals(
+                QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH,
+                notIdentified.reason()
+        );
+    }
+
+    @Test
+    void shouldReturnNotIdentifiedWhenCandidateIdsContainNull() {
+        when(responseSpec.entity(
+                LlmQuestionSemanticMatcher.MatchDecision.class
+        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
+                LlmQuestionSemanticMatcher.Status.IDENTIFIED,
+                "Q-001",
+                Arrays.asList("Q-001", null),
+                null,
+                0.9
+        ));
+
+        var result = matcher.match(
+                NormalizedChecklistQuestion.textOnly("Как проверить упаковку?"),
+                List.of(document("Q-001", "Проверьте упаковку"))
+        );
+
+        assertInstanceOf(QuestionIdentificationResult.NotIdentified.class, result);
+    }
+
 
     @Test
     void shouldRejectInventedQuestionId() {
