@@ -192,6 +192,113 @@ class LlmQuestionSemanticMatcherTest {
         assertInstanceOf(QuestionIdentificationResult.NotIdentified.class, result);
     }
 
+    @Test
+    void shouldReturnNotIdentifiedWhenAmbiguousHasLessThanTwoCandidates() {
+        when(responseSpec.entity(
+                LlmQuestionSemanticMatcher.MatchDecision.class
+        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
+                LlmQuestionSemanticMatcher.Status.AMBIGUOUS,
+                null,
+                List.of("Q-001"),
+                "MULTIPLE_CANDIDATES",
+                0.65
+        ));
+
+        var result = matcher.match(
+                NormalizedChecklistQuestion.textOnly("Как проверить отправление?"),
+                List.of(document("Q-001", "Проверьте упаковку"))
+        );
+
+        assertInstanceOf(QuestionIdentificationResult.NotIdentified.class, result);
+    }
+
+    @Test
+    void shouldReturnNotIdentifiedWhenReasonIsUnknown() {
+        when(responseSpec.entity(
+                LlmQuestionSemanticMatcher.MatchDecision.class
+        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
+                LlmQuestionSemanticMatcher.Status.NOT_IDENTIFIED,
+                null,
+                List.of(),
+                "UNKNOWN_REASON",
+                0.65
+        ));
+
+        var result = matcher.match(
+                NormalizedChecklistQuestion.textOnly("Как проверить отправление?"),
+                List.of(document("Q-001", "Проверьте упаковку"))
+        );
+
+        var notIdentified = assertInstanceOf(
+                QuestionIdentificationResult.NotIdentified.class,
+                result
+        );
+
+        assertEquals(
+                QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH,
+                notIdentified.reason()
+        );
+    }
+
+    @Test
+    void shouldReturnNotIdentifiedWhenLlmReturnsNull() {
+        when(responseSpec.entity(
+                LlmQuestionSemanticMatcher.MatchDecision.class
+        )).thenReturn(null);
+
+        var result = matcher.match(
+                NormalizedChecklistQuestion.textOnly("Как проверить отправление?"),
+                List.of(document("Q-001", "Проверьте упаковку"))
+        );
+
+        var notIdentified = assertInstanceOf(
+                QuestionIdentificationResult.NotIdentified.class,
+                result
+        );
+
+        assertEquals(
+                QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH,
+                notIdentified.reason()
+        );
+        assertEquals(
+                List.of("Q-001"),
+                notIdentified.candidateQuestionIds()
+        );
+    }
+
+    @Test
+    void shouldReturnNotIdentifiedWhenNegationChangesMeaning() {
+        when(responseSpec.entity(
+                LlmQuestionSemanticMatcher.MatchDecision.class
+        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
+                LlmQuestionSemanticMatcher.Status.NOT_IDENTIFIED,
+                null,
+                List.of(),
+                "NEGATION_MISMATCH",
+                0.65
+        ));
+
+        var result = matcher.match(
+                NormalizedChecklistQuestion.textOnly(
+                        "Нельзя передавать отправление без подписи получателя?"
+                ),
+                List.of(document(
+                        "Q-001",
+                        "Можно ли передавать отправление без подписи получателя?"
+                ))
+        );
+
+        var notIdentified = assertInstanceOf(
+                QuestionIdentificationResult.NotIdentified.class,
+                result
+        );
+
+        assertEquals(
+                QuestionIdentificationResult.Reason.NEGATION_MISMATCH,
+                notIdentified.reason()
+        );
+    }
+
     private static Document document(String questionId, String text) {
         return new Document(text, Map.of("questionId", questionId));
     }
