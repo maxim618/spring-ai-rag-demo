@@ -135,7 +135,16 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
 
         List<String> selectedIds = decision.candidateQuestionIds() == null
                 ? List.of()
-                : List.copyOf(decision.candidateQuestionIds());
+                : decision.candidateQuestionIds();
+
+        if (selectedIds.stream().anyMatch(Objects::isNull)) {
+            return notIdentified(
+                    availableIds,
+                    QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH
+            );
+        }
+
+        selectedIds = List.copyOf(selectedIds);
 
         if (selectedIds.stream().anyMatch(id -> !availableIds.contains(id))
                 || selectedIds.stream().distinct().count() != selectedIds.size()) {
@@ -217,6 +226,10 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
             List<String> ids,
             QuestionIdentificationResult.Reason reason
     ) {
+        if (reason == QuestionIdentificationResult.Reason.MULTIPLE_CANDIDATES) {
+            reason = QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH;
+        }
+
         return new QuestionIdentificationResult.NotIdentified(
                 ids,
                 reason,
