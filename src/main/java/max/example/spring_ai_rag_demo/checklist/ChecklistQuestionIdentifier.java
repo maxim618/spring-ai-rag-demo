@@ -1,6 +1,7 @@
 package max.example.spring_ai_rag_demo.checklist;
 
 import org.springframework.ai.document.Document;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -9,6 +10,7 @@ import java.util.Objects;
 import java.util.OptionalDouble;
 import java.util.Set;
 
+@Component
 public final class ChecklistQuestionIdentifier {
 
     private final QuestionSemanticMatcher semanticMatcher;
