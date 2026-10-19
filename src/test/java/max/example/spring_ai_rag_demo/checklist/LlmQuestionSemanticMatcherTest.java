@@ -14,6 +14,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
 class LlmQuestionSemanticMatcherTest {
 
     private ChatClient.Builder chatClientBuilder;
@@ -241,28 +244,22 @@ class LlmQuestionSemanticMatcherTest {
     }
 
     @Test
-    void shouldReturnNotIdentifiedWhenLlmReturnsNull() {
+    void shouldWrapNullLlmResponse() {
         when(responseSpec.entity(
                 LlmQuestionSemanticMatcher.MatchDecision.class
         )).thenReturn(null);
 
-        var result = matcher.match(
-                NormalizedChecklistQuestion.textOnly("Как проверить отправление?"),
-                List.of(document("Q-001", "Проверьте упаковку"))
-        );
-
-        var notIdentified = assertInstanceOf(
-                QuestionIdentificationResult.NotIdentified.class,
-                result
-        );
-
-        assertEquals(
-                QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH,
-                notIdentified.reason()
-        );
-        assertEquals(
-                List.of("Q-001"),
-                notIdentified.candidateQuestionIds()
+        assertThrows(
+                QuestionIdentificationException.class,
+                () -> matcher.match(
+                        NormalizedChecklistQuestion.textOnly(
+                                "Что необходимо сделать?"
+                        ),
+                        List.of(document(
+                                "Q-001",
+                                "Что проверить перед началом рабочего дня?"
+                        ))
+                )
         );
     }
 
@@ -297,6 +294,28 @@ class LlmQuestionSemanticMatcherTest {
                 QuestionIdentificationResult.Reason.NEGATION_MISMATCH,
                 notIdentified.reason()
         );
+    }
+
+    @Test
+    void shouldWrapLlmResponseParsingFailure() {
+        RuntimeException cause = new RuntimeException("Invalid JSON from LLM");
+
+        when(responseSpec.entity(
+                LlmQuestionSemanticMatcher.MatchDecision.class
+        )).thenThrow(cause);
+
+        QuestionIdentificationException exception = assertThrows(
+                QuestionIdentificationException.class,
+                () -> matcher.match(
+                        NormalizedChecklistQuestion.textOnly("Что необходимо сделать?"),
+                        List.of(document(
+                                "Q-001",
+                                "Что проверить перед началом рабочего дня?"
+                        ))
+                )
+        );
+
+        assertSame(cause, exception.getCause());
     }
 
     private static Document document(String questionId, String text) {

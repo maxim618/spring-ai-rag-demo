@@ -6,7 +6,6 @@ import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalDouble;
 
@@ -38,36 +37,37 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
             );
         }
 
-        MatchDecision decision = chatClient.prompt()
-                .system("""
-                        You identify checklist questions by meaning.
+        final MatchDecision decision;
 
-                        Compare the input question with the supplied candidates.
-                        Consider the question text, answer options, selected options,
-                        and meaning-critical negation.
+        try {
+            decision = chatClient.prompt()
+                    .system("""
+                            You identify checklist questions by meaning.
 
-                        Rules:
-                        - Select only an ID from the supplied candidates.
-                        - Do not invent or modify IDs.
-                        - Preserve the meaning of negation. Opposite meanings are
-                          not equivalent.
-                        - If multiple candidates fit and none can be selected
-                          reliably, return AMBIGUOUS.
-                        - If no candidate fits reliably, return NOT_IDENTIFIED.
-                        - Do not answer the checklist question itself.
-                        - Return a structured response matching the requested schema.
-                        """)
-                .user(userPrompt(question, availableCandidates))
-                .call()
-                .entity(MatchDecision.class);
+                            Compare the input question with the supplied candidates.
+                            Consider the question text, answer options, selected options,
+                            and meaning-critical negation.
 
-        if (decision == null || decision.status() == null) {
-            return notIdentified(
-                    idsOf(availableCandidates),
-                    QuestionIdentificationResult.Reason.NO_RELIABLE_MATCH
+                            Rules:
+                            - Select only an ID from the supplied candidates.
+                            - Do not invent or modify IDs.
+                            - Preserve the meaning of negation. Opposite meanings are
+                              not equivalent.
+                            - If multiple candidates fit and none can be selected
+                              reliably, return AMBIGUOUS.
+                            - If no candidate fits reliably, return NOT_IDENTIFIED.
+                            - Do not answer the checklist question itself.
+                            - Return a structured response matching the requested schema.
+                            """)
+                    .user(userPrompt(question, availableCandidates))
+                    .call()
+                    .entity(MatchDecision.class);
+        } catch (RuntimeException exception) {
+            throw new QuestionIdentificationException(
+                    "Failed to obtain a valid question identification from the LLM",
+                    exception
             );
         }
-
         return toResult(decision, availableCandidates);
     }
 
@@ -122,6 +122,13 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
             MatchDecision decision,
             List<Candidate> candidates
     ) {
+        if (decision == null) {
+            throw new QuestionIdentificationException(
+                    "LLM returned a null question identification decision",
+                    new IllegalStateException("LLM response was null")
+            );
+        }
+
         List<String> availableIds = idsOf(candidates);
 
         if (!validConfidence(decision.confidence())) {
