@@ -52,4 +52,16 @@ public class ChecklistQuestionController {
                 Map.of("error", "Request body must be valid JSON and contain a question")
         );
     }
+
+    @ExceptionHandler(QuestionIdentificationException.class)
+    public ResponseEntity<Map<String, String>> handleQuestionIdentificationFailure(
+            QuestionIdentificationException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
+                Map.of(
+                        "error",
+                        "Question identification service returned an invalid response"
+                )
+        );
+    }
 }

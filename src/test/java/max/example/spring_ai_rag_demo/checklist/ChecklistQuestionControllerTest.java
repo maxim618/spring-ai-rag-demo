@@ -120,4 +120,28 @@ class ChecklistQuestionControllerTest {
 
         verifyNoInteractions(checklistService);
     }
+
+    @Test
+    void shouldReturnBadGatewayWhenQuestionIdentificationFails() throws Exception {
+        when(checklistService.identifyQuestion(any(NormalizedChecklistQuestion.class)))
+                .thenThrow(new QuestionIdentificationException(
+                        "LLM returned an invalid response",
+                        new IllegalStateException("Invalid JSON")
+                ));
+
+        mockMvc.perform(post("/checklist/questions/identify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"text":"Что необходимо сделать?"}
+                            """))
+                .andExpect(status().isBadGateway())
+                .andExpect(jsonPath("$.error").value(
+                        "Question identification service returned an invalid response"
+                ))
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("Invalid JSON")
+                        )
+                ));
+    }
 }
