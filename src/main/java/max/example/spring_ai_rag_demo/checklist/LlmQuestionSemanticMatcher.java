@@ -1,6 +1,9 @@
 
 package max.example.spring_ai_rag_demo.checklist;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Component;
@@ -11,6 +14,9 @@ import java.util.OptionalDouble;
 
 @Component
 public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(LlmQuestionSemanticMatcher.class);
 
     private final ChatClient chatClient;
 
@@ -63,6 +69,12 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
                     .call()
                     .entity(MatchDecision.class);
         } catch (RuntimeException exception) {
+
+            logger.error(
+                    "Question identification failed during LLM call or response conversion",
+                    exception
+            );
+
             throw new QuestionIdentificationException(
                     "Failed to obtain a valid question identification from the LLM",
                     exception
