@@ -3,8 +3,13 @@ package max.example.spring_ai_rag_demo.checklist;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
+
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +22,7 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@ExtendWith(OutputCaptureExtension.class)
 class LlmQuestionSemanticMatcherTest {
 
     private ChatClient.Builder chatClientBuilder;
@@ -297,7 +303,7 @@ class LlmQuestionSemanticMatcherTest {
     }
 
     @Test
-    void shouldWrapLlmResponseParsingFailure() {
+    void shouldLogLlmFailureAndPreserveOriginalCause(CapturedOutput output) {
         RuntimeException cause = new RuntimeException("Invalid JSON from LLM");
 
         when(responseSpec.entity(
@@ -307,7 +313,9 @@ class LlmQuestionSemanticMatcherTest {
         QuestionIdentificationException exception = assertThrows(
                 QuestionIdentificationException.class,
                 () -> matcher.match(
-                        NormalizedChecklistQuestion.textOnly("Что необходимо сделать?"),
+                        NormalizedChecklistQuestion.textOnly(
+                                "Что необходимо сделать?"
+                        ),
                         List.of(document(
                                 "Q-001",
                                 "Что проверить перед началом рабочего дня?"
@@ -316,6 +324,11 @@ class LlmQuestionSemanticMatcherTest {
         );
 
         assertSame(cause, exception.getCause());
+
+        assertTrue(output.getAll()
+                .contains("Question identification failed during LLM call or response conversion"));
+
+        assertTrue(output.getAll().contains("Invalid JSON from LLM"));
     }
 
     private static Document document(String questionId, String text) {
