@@ -105,8 +105,9 @@ ChecklistQuestionController
 HTTP Response
 ```
 
-This diagram represents the current question identification process. It does not reflect the fact that the application   
-already implements a separate generative response with an explanation based on the retrieved context.
+This diagram shows the current question identification process. The application retrieves relevant checklist questions   
+and uses an LLM to identify the best match among them. Generating answers with explanations based on the retrieved   
+context remains a possible direction for further development.
 
 ## Technology Stack
 
