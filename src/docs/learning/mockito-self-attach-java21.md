@@ -1204,153 +1204,74 @@ WARNING B остался
 
 ---
 
-# 29. Главные выводы
+# 29. Актуальные выводы расследования
 
-### Вывод №1
+Результаты, описанные выше, относятся к конкретным запускам и не доказывают, что проблема окончательно устранена во всех сценариях.
 
-Mockito warning не был случайным сообщением.
+В одном запуске с явным `-DargLine` предупреждение Mockito исчезло, а тесты прошли. В одном обычном запуске `mvn test` также было зафиксировано отсутствие предупреждения Mockito. Однако последующие проверки конфигурации дали противоречивые результаты:
 
-Mockito действительно выполнял:
+- `mvn help:effective-pom` показывал `argLine = @{argLine} -javaagent:...mockito-core-5.23.0.jar`;
+- в другом фрагменте debug-вывода Surefire `argLine` был пустым, а `fork = false`;
+- предупреждение self-attach продолжало появляться в некоторых запусках.
 
-```text
-dynamic attach
-```
+Поэтому текущий корректный вывод такой:
 
-для получения instrumentation.
+> Передача Mockito как `-javaagent` устраняет self-attach в том запуске, где агент действительно загружен до выполнения тестов. Но пока не установлено, почему конфигурация Maven/Surefire не во всех наблюдаемых запусках приводит к этому результату.
 
----
+Не следует считать проблему окончательно решённой только на основании наличия `-javaagent` в `pom.xml` или одного успешного запуска. Необходимо связать конфигурацию Surefire с фактическим способом выполнения тестов и проверить конкретный процесс JVM.
 
-### Вывод №2
-
-Mockito 5.23.0 уже содержит Java Agent.
-
-Отдельный agent JAR искать не нужно.
-
-Используется:
+Предупреждение:
 
 ```text
-mockito-core-5.23.0.jar
+Sharing is only supported for boot loader classes because bootstrap classpath has been appended
 ```
 
-с:
+остаётся отдельным сообщением JVM. Само по себе оно не доказывает повторный self-attach Mockito.
 
-```text
-Premain-Class: org.mockito.internal.PremainAttach
-```
+## 30. Следующий диагностический шаг
 
----
+Нужно сравнить effective POM и debug-вывод именно для одного и того же запуска.
 
-### Вывод №3
-
-Правильное решение — передать Mockito JVM заранее:
-
-```text
--javaagent:mockito-core-5.23.0.jar
-```
-
-а не разрешать Mockito выполнять dynamic attach.
-
----
-
-### Вывод №4
-
-Maven/Surefire в проекте действительно передаёт Agent.
-
-Это доказано не только содержимым `pom.xml`, но и фактической командой:
-
-```text
-Forking command line:
-...
-java -javaagent:...\mockito-core-5.23.0.jar
-...
-```
-
----
-
-### Вывод №5
-
-После исправления:
-
-```text
-Mockito is currently self-attaching
-```
-
-исчезло при:
+### 30.1. Получить effective POM
 
 ```bat
-mvn test
+mvn help:effective-pom -Doutput=effective-pom.xml
+findstr /N /I /C:"maven-surefire-plugin" /C:"<fork>" /C:"<argLine>" effective-pom.xml
 ```
 
----
+Проверить итоговые значения Surefire, а не только исходный фрагмент `pom.xml`.
 
-### Вывод №6
+### 30.2. Запустить только проблемный тест с debug-логом
 
-Оставшееся:
-
-```text
-Sharing is only supported for boot loader classes...
+```bat
+mvn -Dtest=ChecklistKnowledgeBaseVectorStoreLoaderTest -X test > test-debug.txt 2>&1
+findstr /I /C:"argLine =" /C:"fork =" /C:"Forking command line" /C:"javaagent" /C:"Mockito is currently" /C:"dynamically" test-debug.txt
 ```
 
-— отдельное предупреждение JVM.
+Интерпретация:
 
-Оно не является доказательством того, что Mockito снова делает dynamic attach.
+- если видна команда запуска forked JVM с `-javaagent:...`, нужно проверить, исчез ли Mockito warning в этом же логе;
+- если `fork = false` и нет команды запуска отдельной JVM, нельзя считать настройку Surefire доказательством, что агент передан тестовому процессу;
+- если `argLine` пустой, нужно выяснить, почему эффективная конфигурация отличается от ожидаемой;
+- если `-javaagent` присутствует, но warning остаётся в том же запуске, следует проверить, не запускается ли тест другим механизмом или другим JVM-процессом.
 
----
+### 30.3. Сравнить с явным параметром
 
-### Вывод №7
+Контрольный запуск:
 
-Запуск теста через Maven и запуск теста из IntelliJ IDEA — это потенциально разные runtime-сценарии.
-
-Поэтому Maven-настройка Surefire не обязана автоматически влиять на JUnit-запуск из IDEA.
-
----
-
-# 30. Самый важный практический урок
-
-При диагностике подобных проблем полезно двигаться не от:
-
-```text
-«Как убрать warning?»
+```bat
+mvn -Dtest=ChecklistKnowledgeBaseVectorStoreLoaderTest "-DargLine=-javaagent:%USERPROFILE%\\.m2\\repository\\org\\mockito\\mockito-core\\5.23.0\\mockito-core-5.23.0.jar" test
 ```
 
-а от:
+Этот запуск полезен для сравнения, но не заменяет проверку обычной конфигурации Maven.
 
-```text
-«Почему JVM вообще делает то, на что она предупреждает?» 
-```
+## 31. Практический вывод
 
-В нашем случае такой подход позволил перейти от:
+Цель расследования — не просто получить зелёный `mvn test`, а обеспечить воспроизводимое поведение:
 
-```text
-WARNING
-```
+1. тесты проходят;
+2. Mockito warning об отсутствии заранее подключённого агента не появляется в целевом сценарии запуска;
+3. в debug-логе подтверждено, каким способом и с какими JVM arguments запущен тест;
+4. запуск из IntelliJ IDEA проверяется отдельно, потому что он может обходить Maven Surefire.
 
-к:
-
-```text
-Mockito
- ↓
-Instrumentation
- ↓
-PremainAttachAccess
- ↓
-ByteBuddyAgent.install()
- ↓
-dynamic attach
-```
-
-а затем найти правильный путь:
-
-```text
-Mockito JAR
- ↓
-Premain-Class
- ↓
--javaagent
- ↓
-JVM
- ↓
-Mockito получает Instrumentation заранее
-```
-
-Это уже не просто «убрали предупреждение», а **поняли механизм работы Java Agent и причину поведения Mockito на современной JDK**.
+Не использовать `-XX:+EnableDynamicAgentLoading` как замену исправлению: он может разрешить динамическую загрузку, но не доказывает, что self-attach устранён.
