@@ -1,0 +1,45 @@
+{
+  "description": "Golden test cases for identifying the topmost checklist question in a screenshot. Lower content may contain parts of subsequent questions and must not override the topmost question.",
+  "cases": [
+    {
+      "image": "Q-001.jpg",
+      "expectedQuestionId": "Q-001"
+    },
+    {
+      "image": "Q-002.jpg",
+      "expectedQuestionId": "Q-002"
+    },
+    {
+      "image": "Q-003.jpg",
+      "expectedQuestionId": "Q-003"
+    },
+    {
+      "image": "Q-004.jpg",
+      "expectedQuestionId": "Q-004"
+    },
+    {
+      "image": "Q-005.jpg",
+      "expectedQuestionId": "Q-005"
+    },
+    {
+      "image": "Q-006.jpg",
+      "expectedQuestionId": "Q-006"
+    },
+    {
+      "image": "Q-007.jpg",
+      "expectedQuestionId": "Q-007"
+    },
+    {
+      "image": "Q-008.jpg",
+      "expectedQuestionId": "Q-008"
+    },
+    {
+      "image": "Q-009.jpg",
+      "expectedQuestionId": "Q-009"
+    },
+    {
+      "image": "Q-010.jpg",
+      "expectedQuestionId": "Q-010"
+    }
+  ]
+}
