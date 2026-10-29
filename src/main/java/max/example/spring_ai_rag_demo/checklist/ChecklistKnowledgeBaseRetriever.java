@@ -2,6 +2,7 @@ package max.example.spring_ai_rag_demo.checklist;
 
 import java.util.List;
 
+import com.openai.errors.RateLimitException;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStoreRetriever;
@@ -17,11 +18,15 @@ public class ChecklistKnowledgeBaseRetriever {
     }
 
     public List<Document> retrieve(String question) {
-        return retriever.similaritySearch(
-                SearchRequest.builder()
-                        .query(question)
-                        .topK(3)
-                        .build()
-        );
+        try {
+            return retriever.similaritySearch(
+                    SearchRequest.builder()
+                            .query(question)
+                            .topK(3)
+                            .build()
+            );
+        } catch (RateLimitException exception) {
+            throw new EmbeddingProviderRateLimitException(exception);
+        }
     }
 }

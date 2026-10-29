@@ -102,6 +102,18 @@ public class ChecklistQuestionController {
         return ResponseEntity.unprocessableEntity().body(response);
     }
 
+    @ExceptionHandler(EmbeddingProviderRateLimitException.class)
+    public ResponseEntity<Map<String, String>> handleEmbeddingProviderRateLimit(
+            EmbeddingProviderRateLimitException exception
+    ) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                Map.of(
+                        "error",
+                        "Question search is temporarily unavailable because the embedding provider rate limit was reached"
+                )
+        );
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleUnreadableRequest(
             HttpMessageNotReadableException exception

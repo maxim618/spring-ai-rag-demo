@@ -127,6 +127,29 @@ class ChecklistQuestionControllerTest {
     }
 
     @Test
+    void shouldReturnServiceUnavailableWhenEmbeddingProviderRateLimitIsReached() throws Exception {
+        when(checklistService.identifyQuestion(any(NormalizedChecklistQuestion.class)))
+                .thenThrow(new EmbeddingProviderRateLimitException(
+                        new IllegalStateException("provider rate limit details")
+                ));
+
+        mockMvc.perform(post("/checklist/questions/identify")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"text":"Что необходимо сделать?"}
+                            """))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.error").value(
+                        "Question search is temporarily unavailable because the embedding provider rate limit was reached"
+                ))
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.not(
+                                org.hamcrest.Matchers.containsString("provider rate limit details")
+                        )
+                ));
+    }
+
+    @Test
     void shouldReturnBadGatewayWhenQuestionIdentificationFails() throws Exception {
         when(checklistService.identifyQuestion(any(NormalizedChecklistQuestion.class)))
                 .thenThrow(new QuestionIdentificationException(
