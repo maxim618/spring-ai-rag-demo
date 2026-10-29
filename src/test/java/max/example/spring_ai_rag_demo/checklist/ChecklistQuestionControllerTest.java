@@ -16,13 +16,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ChecklistQuestionControllerTest {
 
     private ChecklistService checklistService;
+    private ScreenshotQuestionExtractor screenshotQuestionExtractor;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
         checklistService = mock(ChecklistService.class);
+        screenshotQuestionExtractor = mock(ScreenshotQuestionExtractor.class);
         mockMvc = org.springframework.test.web.servlet.setup.MockMvcBuilders
-                .standaloneSetup(new ChecklistQuestionController(checklistService))
+                .standaloneSetup(new ChecklistQuestionController(
+                        checklistService,
+                        screenshotQuestionExtractor
+                ))
                 .build();
     }
 
