@@ -11,7 +11,6 @@ import org.springframework.ai.document.Document;
 import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -50,15 +49,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldIdentifyMatchingQuestion() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.IDENTIFIED,
-                "Q-001",
-                List.of("Q-001"),
-                null,
-                0.95
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"IDENTIFIED","questionId":"Q-001","candidateQuestionIds":["Q-001"],"reason":null,"confidence":0.95}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как проверить документ?"),
@@ -73,15 +66,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldReturnAmbiguousWhenSeveralCandidatesFit() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.AMBIGUOUS,
-                null,
-                List.of("Q-001", "Q-002"),
-                "MULTIPLE_CANDIDATES",
-                0.65
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"AMBIGUOUS","questionId":null,"candidateQuestionIds":["Q-001","Q-002"],"reason":"MULTIPLE_CANDIDATES","confidence":0.65}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как проверить отправление?"),
@@ -96,15 +83,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldReturnNotIdentifiedWhenNoCandidateFits() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.NOT_IDENTIFIED,
-                null,
-                List.of(),
-                "NO_RELIABLE_MATCH",
-                0.2
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"NOT_IDENTIFIED","questionId":null,"candidateQuestionIds":[],"reason":"NO_RELIABLE_MATCH","confidence":0.2}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как оформить отпуск?"),
@@ -116,15 +97,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldReturnNotIdentifiedWhenReasonIsMultipleCandidates() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.NOT_IDENTIFIED,
-                null,
-                List.of(),
-                "MULTIPLE_CANDIDATES",
-                0.2
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"NOT_IDENTIFIED","questionId":null,"candidateQuestionIds":[],"reason":"MULTIPLE_CANDIDATES","confidence":0.2}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как оформить отпуск?"),
@@ -142,15 +117,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldReturnNotIdentifiedWhenCandidateIdsContainNull() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.IDENTIFIED,
-                "Q-001",
-                Arrays.asList("Q-001", null),
-                null,
-                0.9
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"IDENTIFIED","questionId":"Q-001","candidateQuestionIds":["Q-001",null],"reason":null,"confidence":0.9}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как проверить упаковку?"),
@@ -163,15 +132,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldRejectInventedQuestionId() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.IDENTIFIED,
-                "INVENTED-ID",
-                List.of("INVENTED-ID"),
-                null,
-                0.99
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"IDENTIFIED","questionId":"INVENTED-ID","candidateQuestionIds":["INVENTED-ID"],"reason":null,"confidence":0.99}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как проверить документ?"),
@@ -183,15 +146,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldRejectInvalidConfidence() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.IDENTIFIED,
-                "Q-001",
-                List.of("Q-001"),
-                null,
-                1.5
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"IDENTIFIED","questionId":"Q-001","candidateQuestionIds":["Q-001"],"reason":null,"confidence":1.5}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как проверить документ?"),
@@ -203,15 +160,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldReturnNotIdentifiedWhenAmbiguousHasLessThanTwoCandidates() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.AMBIGUOUS,
-                null,
-                List.of("Q-001"),
-                "MULTIPLE_CANDIDATES",
-                0.65
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"AMBIGUOUS","questionId":null,"candidateQuestionIds":["Q-001"],"reason":"MULTIPLE_CANDIDATES","confidence":0.65}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как проверить отправление?"),
@@ -223,15 +174,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldReturnNotIdentifiedWhenReasonIsUnknown() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.NOT_IDENTIFIED,
-                null,
-                List.of(),
-                "UNKNOWN_REASON",
-                0.65
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"NOT_IDENTIFIED","questionId":null,"candidateQuestionIds":[],"reason":"UNKNOWN_REASON","confidence":0.65}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly("Как проверить отправление?"),
@@ -251,9 +196,7 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldWrapNullLlmResponse() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(null);
+        when(responseSpec.content()).thenReturn("null");
 
         assertThrows(
                 QuestionIdentificationException.class,
@@ -271,15 +214,9 @@ class LlmQuestionSemanticMatcherTest {
 
     @Test
     void shouldReturnNotIdentifiedWhenNegationChangesMeaning() {
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenReturn(new LlmQuestionSemanticMatcher.MatchDecision(
-                LlmQuestionSemanticMatcher.Status.NOT_IDENTIFIED,
-                null,
-                List.of(),
-                "NEGATION_MISMATCH",
-                0.65
-        ));
+        when(responseSpec.content()).thenReturn("""
+                {"status":"NOT_IDENTIFIED","questionId":null,"candidateQuestionIds":[],"reason":"NEGATION_MISMATCH","confidence":0.65}
+                """);
 
         var result = matcher.match(
                 NormalizedChecklistQuestion.textOnly(
@@ -306,9 +243,7 @@ class LlmQuestionSemanticMatcherTest {
     void shouldLogLlmFailureAndPreserveOriginalCause(CapturedOutput output) {
         RuntimeException cause = new RuntimeException("Invalid JSON from LLM");
 
-        when(responseSpec.entity(
-                LlmQuestionSemanticMatcher.MatchDecision.class
-        )).thenThrow(cause);
+        when(responseSpec.content()).thenThrow(cause);
 
         QuestionIdentificationException exception = assertThrows(
                 QuestionIdentificationException.class,
