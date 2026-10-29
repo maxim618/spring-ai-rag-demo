@@ -33,7 +33,7 @@ public class ScreenshotQuestionExtractor {
         MimeType mimeType = parseAndValidateContentType(contentType);
         ScreenshotQuestionExtractionResponse response;
         try {
-            response = visionClient.extractTopmostQuestion(image.clone(), mimeType);
+            response = visionClient.extractTopmostQuestion(image, mimeType);
         } catch (ScreenshotQuestionExtractionException exception) {
             throw exception;
         } catch (RuntimeException exception) {
