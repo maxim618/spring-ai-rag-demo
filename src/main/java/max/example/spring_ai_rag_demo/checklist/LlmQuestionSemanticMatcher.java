@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.converter.BeanOutputConverter;
 import org.springframework.ai.document.Document;
 import org.springframework.stereotype.Component;
 
@@ -44,10 +45,12 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
         }
 
         final MatchDecision decision;
+        BeanOutputConverter<MatchDecision> outputConverter =
+                new BeanOutputConverter<>(MatchDecision.class);
 
         try {
-            decision = chatClient.prompt()
-                    .system("""
+            String rawResponse = chatClient.prompt()
+                    .system(system -> system.text("""
                             You identify checklist questions by meaning.
 
                             Compare the input question with the supplied candidates.
@@ -63,13 +66,24 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
                               reliably, return AMBIGUOUS.
                             - If no candidate fits reliably, return NOT_IDENTIFIED.
                             - Do not answer the checklist question itself.
-                            - Return a structured response matching the requested schema.
-                            """)
+                            - Return only the structured response matching this schema:
+                            {format}
+                            """).param("format", outputConverter.getFormat()))
                     .user(userPrompt(question, availableCandidates))
                     .call()
-                    .entity(MatchDecision.class);
-        } catch (RuntimeException exception) {
+                    .content();
 
+            try {
+                decision = outputConverter.convert(rawResponse);
+            } catch (RuntimeException conversionException) {
+                logger.error(
+                        "Could not convert semantic matcher response to MatchDecision. Raw model response: {}",
+                        rawResponse,
+                        conversionException
+                );
+                throw conversionException;
+            }
+        } catch (RuntimeException exception) {
             logger.error(
                     "Question identification failed during LLM call or response conversion",
                     exception
