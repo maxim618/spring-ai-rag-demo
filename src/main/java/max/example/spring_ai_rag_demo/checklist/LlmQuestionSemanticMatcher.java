@@ -50,7 +50,7 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
 
         try {
             String rawResponse = chatClient.prompt()
-                    .system(system -> system.text("""
+                    .system("""
                             You identify checklist questions by meaning.
 
                             Compare the input question with the supplied candidates.
@@ -67,8 +67,8 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
                             - If no candidate fits reliably, return NOT_IDENTIFIED.
                             - Do not answer the checklist question itself.
                             - Return only the structured response matching this schema:
-                            {format}
-                            """).param("format", outputConverter.getFormat()))
+                            %s
+                            """.formatted(outputConverter.getFormat()))
                     .user(userPrompt(question, availableCandidates))
                     .call()
                     .content();
