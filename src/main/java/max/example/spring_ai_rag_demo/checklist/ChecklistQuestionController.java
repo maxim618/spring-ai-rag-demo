@@ -7,8 +7,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -16,9 +20,14 @@ import java.util.Map;
 public class ChecklistQuestionController {
 
     private final ChecklistService checklistService;
+    private final ScreenshotQuestionExtractor screenshotQuestionExtractor;
 
-    public ChecklistQuestionController(ChecklistService checklistService) {
+    public ChecklistQuestionController(
+            ChecklistService checklistService,
+            ScreenshotQuestionExtractor screenshotQuestionExtractor
+    ) {
         this.checklistService = checklistService;
+        this.screenshotQuestionExtractor = screenshotQuestionExtractor;
     }
 
     @PostMapping("/identify")
@@ -42,6 +51,55 @@ public class ChecklistQuestionController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(result);
         }
         return ResponseEntity.unprocessableEntity().body(result);
+    }
+
+    @PostMapping(value = "/identify-screenshot", consumes = "multipart/form-data")
+    public ResponseEntity<?> identifyScreenshot(
+            @RequestPart("image") MultipartFile image
+    ) {
+        if (image == null || image.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Screenshot must not be empty"));
+        }
+
+        final ScreenshotQuestionExtractor.ExtractedScreenshotQuestion extracted;
+        try {
+            extracted = screenshotQuestionExtractor.extractTopmostQuestion(
+                    image.getBytes(),
+                    image.getContentType()
+            );
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("error", exception.getMessage()));
+        } catch (ScreenshotQuestionExtractionException exception) {
+            return ResponseEntity.unprocessableEntity().body(
+                    Map.of("error", exception.getMessage())
+            );
+        } catch (IOException exception) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("error", "Could not read uploaded screenshot")
+            );
+        }
+
+        NormalizedChecklistQuestion question = new NormalizedChecklistQuestion(
+                extracted.text(),
+                extracted.answerOptions(),
+                List.of()
+        );
+        ChecklistQuestionLookupResult result = checklistService.identifyQuestion(question);
+
+        ScreenshotQuestionIdentificationResponse response =
+                new ScreenshotQuestionIdentificationResponse(
+                        extracted.text(),
+                        extracted.answerOptions(),
+                        result
+                );
+
+        if (result instanceof ChecklistQuestionLookupResult.Identified) {
+            return ResponseEntity.ok(response);
+        }
+        if (result instanceof ChecklistQuestionLookupResult.Ambiguous) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
+        return ResponseEntity.unprocessableEntity().body(response);
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
