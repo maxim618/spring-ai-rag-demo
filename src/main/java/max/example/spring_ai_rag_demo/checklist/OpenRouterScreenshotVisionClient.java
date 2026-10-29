@@ -53,7 +53,7 @@ public class OpenRouterScreenshotVisionClient implements ScreenshotVisionClient 
     ) {
         try {
             return chatClient.prompt()
-                    .options(OpenAiChatOptions.builder().model(model).build())
+                    .options(OpenAiChatOptions.builder().model(model))
                     .user(user -> user
                             .text(EXTRACTION_PROMPT)
                             .media(mimeType, new ByteArrayResource(image)))
