@@ -75,7 +75,7 @@ class OpenRouterScreenshotVisionClientTest {
         assertThat(actualPrompt)
                 .contains("заканчиваться двоеточием")
                 .contains("Не требуй наличия чекбокса")
-                .containsPattern("без текста\\s+задания")
+                .contains("но не виден текст задания")
                 .contains("status=UNREADABLE")
                 .contains("Не восстанавливай текст по догадке")
                 .contains("Работай строго в два этапа")
