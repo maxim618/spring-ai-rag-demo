@@ -1,5 +1,7 @@
 package max.example.spring_ai_rag_demo.checklist;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.core.io.ByteArrayResource;
@@ -10,6 +12,9 @@ import java.util.Objects;
 
 @Component
 public class OpenRouterScreenshotVisionClient implements ScreenshotVisionClient {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(OpenRouterScreenshotVisionClient.class);
 
     private static final String EXTRACTION_PROMPT = """
             На изображении может быть несколько карточек вопросов чек-листа.
@@ -98,6 +103,11 @@ public class OpenRouterScreenshotVisionClient implements ScreenshotVisionClient 
                     .call()
                     .entity(ScreenshotQuestionExtractionResponse.class);
         } catch (RuntimeException exception) {
+            logger.error(
+                    "Vision model request or response conversion failed; configuredModel={}",
+                    model,
+                    exception
+            );
             throw new ScreenshotQuestionExtractionException(
                     "Vision model request failed", exception
             );
