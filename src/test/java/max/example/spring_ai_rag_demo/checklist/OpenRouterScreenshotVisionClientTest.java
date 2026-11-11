@@ -2,17 +2,16 @@ package max.example.spring_ai_rag_demo.checklist;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.util.MimeType;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.core.io.Resource;
+import org.springframework.util.MimeType;
 
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 import static org.mockito.ArgumentMatchers.anyString;
-
+import static org.mockito.Mockito.*;
 
 class OpenRouterScreenshotVisionClientTest {
 
@@ -78,6 +77,13 @@ class OpenRouterScreenshotVisionClientTest {
                 .contains("Не требуй наличия чекбокса")
                 .containsPattern("без текста\\s+задания")
                 .contains("status=UNREADABLE")
-                .contains("Не восстанавливай текст по догадке");
+                .contains("Не восстанавливай текст по догадке")
+                .contains("Работай строго в два этапа")
+                .contains("анализируя только изображение")
+                .contains("Не используй совпадение отдельного варианта ответа с базой знаний")
+                .contains("верхняя часть изображения может начинаться с середины предыдущей карточки")
+                .contains("полностью игнорируй этот фрагмент при выборе вопроса")
+                .contains("Это правило имеет приоритет над")
+                .contains("Не пытайся восстановить задание предыдущей карточки по её вариантам ответа");
     }
 }
