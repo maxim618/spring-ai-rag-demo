@@ -40,6 +40,14 @@
     {
       "image": "Q-010.jpg",
       "expectedQuestionId": "Q-010"
+    },
+    {
+      "image": "Q-011.jpg",
+      "expectedQuestionId": "Q-011"
+    },
+    {
+      "image": "Q-012.jpg",
+      "expectedQuestionId": "Q-012"
     }
   ]
 }
