@@ -46,7 +46,7 @@ class ScreenshotQuestionCasesTest {
 
             assertThat(testCases.cases())
                     .as("The initial real-data test set should contain ten screenshot cases")
-                    .hasSize(10);
+                    .hasSize(12);
 
             return testCases.cases().stream()
                     .map(testCase -> org.junit.jupiter.params.provider.Arguments.of(
