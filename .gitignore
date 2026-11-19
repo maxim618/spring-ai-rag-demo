@@ -37,8 +37,17 @@ build/
 /.gitattributes
 
 ### Local configuration and knowledge base ###
+
+# Local secrets
 .env
-**/.env
+.env.*
+!.env.example
+secrets/
+
+# Tracked configuration examples
+!secrets-example/db/.env
+!secrets-example/openrouter/.env
+
+# Private knowledge base
 data/delivery-standards.txt
 /data/checklist-knowledge-base.json
-src/main/resources/screenshots/
