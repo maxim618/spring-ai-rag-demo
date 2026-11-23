@@ -14,6 +14,7 @@ public sealed interface ChecklistQuestionLookupResult
             String type,
             String question,
             List<ChecklistOption> options,
+            List<String> correctOptions,
             OptionalDouble confidence
     ) implements ChecklistQuestionLookupResult {
 
@@ -22,6 +23,9 @@ public sealed interface ChecklistQuestionLookupResult
             type = requireNonBlank(type, "type");
             question = requireNonBlank(question, "question");
             options = List.copyOf(Objects.requireNonNull(options, "options"));
+            correctOptions = List.copyOf(
+                    Objects.requireNonNull(correctOptions, "correctOptions")
+            );
             confidence = Objects.requireNonNull(confidence, "confidence");
         }
     }

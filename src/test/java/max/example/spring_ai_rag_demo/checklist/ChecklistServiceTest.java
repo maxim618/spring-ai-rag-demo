@@ -46,7 +46,7 @@ class ChecklistServiceTest {
     }
 
     @Test
-    void shouldReturnCanonicalQuestionWithoutCorrectOptions() {
+    void shouldReturnCanonicalQuestionWithCorrectOptions() {
         var input = NormalizedChecklistQuestion.textOnly(
                 "Что проверить перед началом смены?"
         );
@@ -66,6 +66,7 @@ class ChecklistServiceTest {
         assertEquals("Что необходимо сделать перед началом рабочего дня?", identified.question());
         assertEquals(List.of(new ChecklistOption("A", "Проверить рабочее оборудование"),
                 new ChecklistOption("B", "Пропустить проверку оборудования")), identified.options());
+        assertEquals(List.of("A"), identified.correctOptions());
         verify(retriever).retrieve(input.text());
         verify(identifier).identify(input, candidates);
     }

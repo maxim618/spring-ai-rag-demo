@@ -39,6 +39,7 @@ class ChecklistQuestionControllerTest {
                         "SINGLE_CHOICE",
                         "Что проверить перед началом смены?",
                         List.of(new ChecklistOption("A", "Оборудование")),
+                        List.of("A"),
                         OptionalDouble.of(0.95)
                 )
         );
@@ -55,7 +56,8 @@ class ChecklistQuestionControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.questionId").value("Q-001"))
                 .andExpect(jsonPath("$.question").value("Что проверить перед началом смены?"))
-                .andExpect(jsonPath("$.options[0].text").value("Оборудование"));
+                .andExpect(jsonPath("$.options[0].text").value("Оборудование"))
+                .andExpect(jsonPath("$.correctOptions[0]").value("A"));
 
         verify(checklistService).identifyQuestion(new NormalizedChecklistQuestion(
                 "Что проверить перед началом смены?",
