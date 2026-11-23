@@ -74,6 +74,7 @@ public class ChecklistService {
                     sourceQuestion.type(),
                     sourceQuestion.question(),
                     sourceQuestion.options(),
+                    sourceQuestion.correctOptions(),
                     identified.confidence()
             );
         }

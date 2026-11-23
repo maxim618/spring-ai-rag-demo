@@ -199,9 +199,9 @@ Supported formats: JPEG, PNG, and WebP.
 | `502 Bad Gateway`          | Invalid response from the identification service                   |
 | `503 Service Unavailable`  | Search temporarily unavailable due to an embeddings provider limit |
 
-After successful identification, the API returns the canonical question, its type, answer options, and the available confidence score.
+After successful identification, the API returns the canonical question, its type, answer options, canonical `correctOptions`, and the available confidence score. Correct options are taken only from the canonical knowledge-base record associated with the confirmed `Question ID`.
 
-The current implementation identifies questions and returns their canonical representation. Checking selected answers and returning the correct answer options are not yet part of the implemented functionality.
+The API does not check or grade user-selected answers. Correct options are not returned when identification is ambiguous or unsuccessful.
 
 ## Technology Stack
 
