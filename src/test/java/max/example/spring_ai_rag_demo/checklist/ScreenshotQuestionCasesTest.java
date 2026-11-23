@@ -1,17 +1,47 @@
 package max.example.spring_ai_rag_demo.checklist;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ScreenshotQuestionCasesTest {
+
+    private static final List<String> EXPECTED_QUESTION_IDS = List.of(
+            "Q-001", "Q-002", "Q-003", "Q-004",
+            "Q-005", "Q-006", "Q-007", "Q-008",
+            "Q-009", "Q-010", "Q-011", "Q-012"
+    );
+
+    @Test
+    void shouldKeepGoldenScreenshotManifestConsistentWithoutCallingVisionApi()
+            throws IOException {
+        List<ScreenshotQuestionCase> cases = loadCases();
+
+        assertThat(cases)
+                .as("The golden screenshot regression set should contain all twelve cases")
+                .hasSize(12);
+
+        assertThat(cases)
+                .extracting(ScreenshotQuestionCase::expectedQuestionId)
+                .containsExactlyElementsOf(EXPECTED_QUESTION_IDS);
+
+        List<String> imageNames = cases.stream()
+                .map(ScreenshotQuestionCase::image)
+                .toList();
+
+        assertThat(new HashSet<>(imageNames))
+                .as("Each golden case must reference a unique screenshot")
+                .hasSameSizeAs(imageNames);
+    }
 
     @ParameterizedTest(name = "{0} should have expected question ID {1}")
     @MethodSource("screenshotCases")
@@ -34,6 +64,14 @@ class ScreenshotQuestionCasesTest {
 
     private static Stream<org.junit.jupiter.params.provider.Arguments> screenshotCases()
             throws IOException {
+        return loadCases().stream()
+                .map(testCase -> org.junit.jupiter.params.provider.Arguments.of(
+                        testCase.image(),
+                        testCase.expectedQuestionId()
+                ));
+    }
+
+    private static List<ScreenshotQuestionCase> loadCases() throws IOException {
         try (InputStream manifest = ScreenshotQuestionCasesTest.class
                 .getResourceAsStream("/checklist/screenshot-question-cases.json")) {
             assertThat(manifest)
@@ -45,14 +83,10 @@ class ScreenshotQuestionCasesTest {
                     .readValue(manifest, ScreenshotQuestionCases.class);
 
             assertThat(testCases.cases())
-                    .as("The initial real-data test set should contain ten screenshot cases")
-                    .hasSize(12);
+                    .as("Screenshot test manifest must contain a cases array")
+                    .isNotNull();
 
-            return testCases.cases().stream()
-                    .map(testCase -> org.junit.jupiter.params.provider.Arguments.of(
-                            testCase.image(),
-                            testCase.expectedQuestionId()
-                    ));
+            return testCases.cases();
         }
     }
 
