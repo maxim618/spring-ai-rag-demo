@@ -1,4 +1,4 @@
-**[Русская версия](README.ru.md)**
+**[Russian version](README.ru.md)**
 
 # Spring AI RAG Demo
 
@@ -7,107 +7,201 @@
 ![Spring AI](https://img.shields.io/badge/Spring%20AI-2.0.0-6DB33F?logo=spring&logoColor=white)
 ![Maven](https://img.shields.io/badge/Maven-3.9.9-C71A36?logo=apachemaven&logoColor=white)
 
-An educational project for learning **Spring AI 2.0**, integrating LLMs and building a RAG system   
-(Retrieval-Augmented Generation).
+An educational project for exploring **Spring AI 2.0**, integrating LLMs, and building a RAG system (Retrieval-Augmented Generation).
 
-The project develops approximately as follows: from integration with a language model to loading a knowledge base, 
-vector search, and identifying questions based on checklist content.
+The project demonstrates the gradual implementation of RAG system components: knowledge base loading, vector search, semantic question identification, and image processing using a Vision model.
 
 ## Practical Scenario
 
-The educational scenario uses a delivery service courier checklist.
+The project uses a delivery service courier checklist as its practical scenario.
 
-Before starting a shift, a courier can review delivery standards, and the application helps match a submitted question  
-with the corresponding question in the knowledge base.
+When starting a shift, a courier can review delivery standards, while the application helps match a submitted question with the corresponding question in the knowledge base.
 
-The project makes it possible to study how structured data, vector search, and a language model can be combined in a   
-single application.
+The project demonstrates how structured data, vector search, language models, and image processing can be combined in a single Spring Boot application.
 
 ## Implemented Features
 
-- A Spring Boot application using Java 21.
-- Integration with Spring AI and an OpenAI-compatible API through OpenRouter.
-- Configuration of a chat model and an embedding model.
-- Loading a knowledge base from a JSON file.
-- Converting questions and answer options into documents for the vector store.
+- Integration of Spring AI with an OpenAI-compatible API through OpenRouter.
+- Configuration of models for text processing, image processing, and embedding generation.
+- Loading the Checklist Knowledge Base from a JSON file.
+- Converting questions and answer options into Spring AI documents.
 - Integration with PostgreSQL and PGVector.
 - Loading documents into the vector store when the application starts.
-- Searching for the most similar documents based on the question text.
-- Checklist question identification using a language model and validation of the result against the retrieved candidates.
-- Handling invalid LLM responses and testing the corresponding behavior.
-- Logging technical errors when calling the model and converting its response.
+- Searching for semantically similar questions using vector retrieval.
+- Identifying questions with an LLM based on retrieved candidates.
+- Validating the identification result against the list of retrieved candidates.
+- Handling ambiguous and unidentified questions.
+- Extracting question text and answer options from a screenshot using a Vision model.
+- Supporting both text and image input.
+- Handling errors from external AI providers and safely returning errors through the HTTP API.
+- Automated tests for components and screenshot recognition scenarios.
+- Local application configuration using micro-env.
 
-## How the Process Works
+## How Question Identification Works
 
-### Preparing the Knowledge Base
+### 1. Preparing the Knowledge Base
 
-The knowledge base is loaded from a JSON file. Each question contains an identifier, text, type, and answer options.
+The Checklist Knowledge Base is loaded from a JSON file.
 
-When preparing documents for PGVector, the question text is combined with its answer options. The question identifier   
-and type are stored in the document metadata.
+Each question contains:
+- a unique `Question ID`;
+- the question text;
+- the question type;
+- answer options;
+- correct answer options.
 
-### Vector Search
+For vector search, each logical question is converted into a single Spring AI document.
 
-When the application starts, the knowledge base is converted into documents and loaded into PGVector.
+The document text includes the canonical question wording and its answer options. The question identifier and type are stored in the metadata.
 
-For an incoming question, the application searches for the three most similar documents. The retrieved documents are   
-used as candidates for the next stage.
+To ensure stability across repeated loading, a deterministic technical `Document.id` is generated based on the `Question ID`.
 
-### Question Identification
+### 2. Vector Search
 
-The language model receives the original question and the list of retrieved candidates. The application validates the   
-result: the model must not return question identifiers that are not among the supplied candidates.
+When the application starts, the Checklist Knowledge Base documents are loaded into PGVector.
 
-The application distinguishes between successful identification, an ambiguous result, and a situation in which no reliable  
-match is found.
+When a question is submitted, the application performs vector search and retrieves the most similar documents.
 
-If the model returns an invalid response or a processing error occurs, the application converts the technical   
-error into a controlled exception. Internal error details are not disclosed in the HTTP response.
+The search results are used as candidates for the subsequent identification stage. Vector retrieval alone is not considered a confirmed identification.
+
+### 3. Question Identification
+
+The LLM receives a normalized representation of the question and the list of retrieved candidates.
+
+The application validates the result and does not allow the selection of an identifier that is absent from the supplied candidates.
+
+Three outcomes are supported:
+- `Identified` — the question has been reliably identified;
+- `Ambiguous` — an ambiguous match has been found;
+- `NotIdentified` — no reliable match has been found.
+
+After successful identification, the application retrieves the canonical question record from the Checklist Knowledge Base using the `Question ID`.
+
+If identification is ambiguous or unsuccessful, the application does not automatically select the closest result.
+
+### 4. Screenshot Recognition
+
+As an alternative to text input, the application accepts a checklist image.
+
+The Vision model extracts the text of the first (topmost) question and its available answer options.
+
+The extracted information is converted into the same normalized representation used for text input.
+
+The same identification pipeline is then applied:
+- vector search for candidates;
+- semantic identification;
+- result validation;
+- retrieval of the canonical record from the knowledge base.
+
+If the topmost question cannot be reliably read, the application returns an appropriate error instead of attempting to identify another question in the image.
+
+In the current implementation, one screenshot is processed per request, and the first (topmost) question is identified.
 
 ## Architecture
 
-```text
-JSON Knowledge Base
-       │
-       ▼
-ChecklistKnowledgeBaseLoader
-       │
-       ▼
-ChecklistKnowledgeBaseVectorStoreLoader
-       │
-       ▼
-     PGVector
+The main identification pipeline:
 
-User Question
-       │
-       ▼
+```text
+             Text Input
+                 |
+                 |
+Screenshot       |
+    |            |
+    v            |
+Vision Model     |
+    |            |
+    +------+-----+
+           |
+           v
+Normalized Question Representation
+           |
+           v
 ChecklistKnowledgeBaseRetriever
-       │
-       ▼
-Three Most Similar Documents
-       │
-       ▼
+           |
+           v
+        PGVector
+           |
+           v
+    Candidate List
+           |
+           v
 LlmQuestionSemanticMatcher
-       │
-       ▼
+           |
+           v
 ChecklistQuestionIdentifier
-       │
-       ▼
-Result Validation
-       │
-       ▼
-ChecklistService
-       │
-       ▼
-ChecklistQuestionController
-       │
-       ▼
-HTTP Response
+           |
+           v
+Identification Result Validation
+           |
+           v
+       Question ID
+           |
+           v
+Retrieval of the Canonical Record
+from the Checklist Knowledge Base
+           |
+           v
+      HTTP Response
 ```
 
-This diagram shows the current question identification process. The application retrieves relevant checklist questions   
-and uses an LLM to identify the best match among them. Generating answers with explanations based on the retrieved   
-context remains a possible direction for further development.
+The main application components:
+
+- `ChecklistKnowledgeBaseLoader` — loads the knowledge base.
+- `ChecklistKnowledgeBaseVectorStoreLoader` — prepares and loads documents into PGVector.
+- `ChecklistKnowledgeBaseRetriever` — retrieves candidates.
+- `ScreenshotQuestionExtractor` — extracts a question from an image.
+- `OpenRouterScreenshotVisionClient` — interacts with the Vision model.
+- `LlmQuestionSemanticMatcher` — performs semantic question matching.
+- `ChecklistQuestionIdentifier` — validates the identification result.
+- `ChecklistService` — coordinates the process.
+- `ChecklistQuestionController` — provides the REST API.
+
+## REST API
+
+The application provides two main ways to identify questions.
+
+### Text Input
+
+`POST /checklist/questions/identify`
+
+Example request:
+
+```json
+{
+  "text": "Handing the order to the guest. Select all correct statements:",
+  "answerOptions": [
+    "Greet the guest when meeting them",
+    "Address the guest by name",
+    "Wish the guest a pleasant meal"
+  ],
+  "selectedOptions": ["A", "B"]
+}
+```
+
+### Image Input
+
+`POST /checklist/questions/identify-screenshot`
+
+Request type: `multipart/form-data`.
+
+Image parameter name: `image`.
+
+Supported formats: JPEG, PNG, and WebP.
+
+### Processing Results
+
+| HTTP Status                | Description                                                        |
+|----------------------------|--------------------------------------------------------------------|
+| `200 OK`                   | The question was successfully identified                           |
+| `400 Bad Request`          | Invalid request or image                                           |
+| `409 Conflict`             | Ambiguous identification                                           |
+| `422 Unprocessable Entity` | The question could not be reliably identified or recognized        |
+| `502 Bad Gateway`          | Invalid response from the identification service                   |
+| `503 Service Unavailable`  | Search temporarily unavailable due to an embeddings provider limit |
+
+After successful identification, the API returns the canonical question, its type, answer options, and the available confidence score.
+
+The current implementation identifies questions and returns their canonical representation. Checking selected answers and returning the correct answer options are not yet part of the implemented functionality.
 
 ## Technology Stack
 
@@ -115,129 +209,102 @@ context remains a possible direction for further development.
 - Spring Boot 4.1.0
 - Spring AI 2.0.0
 - Spring Web
-- OpenRouter — access to an OpenAI-compatible API
+- OpenRouter
 - PostgreSQL
 - PGVector
+- Embeddings
+- Vision / multimodal LLM
 - Maven
-- JUnit and Mockito for testing
+- JUnit 5
+- Mockito
+- Docker
+- Micro-env
 
 ## Configuration
 
-The main settings are located in `src/main/resources/application.properties`.
+The main application settings are located in:
 
-The application uses the following environment variables:
+`src/main/resources/application.properties`
 
-| Variable             | Purpose                              |
-|----------------------|--------------------------------------|
-| `OPENROUTER_API_KEY` | OpenRouter access key                |
-| `KNOWLEDGE_FILE`     | Path to the JSON knowledge base file |
-| `DB_URL`             | PostgreSQL JDBC URL                  |
-| `DB_USERNAME`        | PostgreSQL username                  |
-| `DB_PASSWORD`        | PostgreSQL password                  |
+Local configuration is loaded using the [micro-env](https://central.sonatype.com/artifact/io.github.maxim618/micro-env) library.
 
-Default values for `KNOWLEDGE_FILE` and the database parameters are provided in the application configuration.
+The `micro-env.list` file defines the locations of local configuration files:
 
-The project uses the `micro-env` library to load configuration from local files; `micro-env.list` points to the `.env` file   
-containing OpenRouter settings.
+```text
+secrets/openrouter=.env
+secrets/db=.env
+```
+
+Example configuration files are included in the repository:
+
+```text
+secrets-example/
+├── openrouter/
+│   └── .env
+└── db/
+    └── .env
+```
+
+The following parameters are used:
+
+| Variable             | Purpose                               |
+|----------------------|---------------------------------------|
+| `OPENROUTER_API_KEY` | OpenRouter access key                 |
+| `DB_URL`             | PostgreSQL JDBC URL                   |
+| `DB_USERNAME`        | PostgreSQL username                   |
+| `DB_PASSWORD`        | PostgreSQL password                   |
+| `KNOWLEDGE_FILE`     | Path to the JSON knowledge base       |
+| `SCREENSHOT_MODEL`   | Model used for screenshot recognition |
+
+Default values for some parameters are provided in `application.properties`.
 
 ## Starting PostgreSQL and PGVector
 
-The project root contains `docker-compose.yml`, which starts PostgreSQL with the PGVector extension.
+The project root contains `docker-compose.yml`.
 
 ```bash
 docker compose up -d
 ```
 
-By default, the container uses:
-
-- Database: `rag`
-- User: `rag`
-- Port: `5432`
-
-For local educational use, these values are consistent with `application.properties`.
-
-| **Do not use such simple credentials in a publicly accessible or production environment!** |
-|--------------------------------------------------------------------------------------------|
-
-
-
-## Running the Application
-
-Java 21, Maven, and Docker must be installed.
-
-1. Start PostgreSQL with PGVector:
-
-   ```bash
-   docker compose up -d
-   ```
-
-2. Configure the OpenRouter key using the supported local configuration.
-
-3. If necessary, specify a custom knowledge base file using `KNOWLEDGE_FILE`. The default is `data/checklist-knowledge-base.example.json`.
-
-4. Start the application:
-
-   ```bash
-   mvn spring-boot:run
-   ```
-
 ## Testing
 
-Run the tests:
-
-```bash
-mvn clean test
-```
-
-Verify the build and integration tests, if they are configured in the project:
-
-```bash
-mvn clean verify
-```
-
-Component tests make it possible to verify error handling and interactions with dependencies without requiring a call   
-to a real language model in every test.
+Prepared checklist screenshots and their corresponding expected results are used to test recognition.
 
 ## Project Structure
 
 ```text
-src/
-├── main/
-│   ├── java/max/example/spring_ai_rag_demo/
-│   │   └── checklist/
-│   │       ├── ChecklistKnowledgeBaseLoader
-│   │       ├── ChecklistKnowledgeBaseVectorStoreLoader
-│   │       ├── ChecklistKnowledgeBaseRetriever
-│   │       ├── ChecklistQuestionIdentifier
-│   │       ├── LlmQuestionSemanticMatcher
-│   │       ├── ChecklistService
-│   │       └── ChecklistQuestionController
-│   └── resources/
-│       └── application.properties
-├── test/
-│   └── java/
-└── docs/
+spring-ai-rag-demo/
+├── data/
+│   └── checklist-knowledge-base.example.json
+├── secrets-example/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   └── resources/
+│   └── test/
+├── docs/
+├── docker-compose.yml
+├── micro-env.list
+├── pom.xml
+├── README.md
+└── README.ru.md
 ```
-
-Additional materials describing engineering decisions and troubleshooting are available in the project documentation.
 
 ## Further Development
 
 Possible directions for further development:
 
-- Separating the retrieval and answer generation stages.
-- Generating answers using the retrieved context.
-- Improving robustness to differences in question wording.
-- Additional integration tests for vector search and configuration.
-- Studying architectural approaches to RAG applications.
+- Generating answers with explanations.
+- Additional processing of regulatory documents.
+- Expanding integration tests.
+- Exploring architectural approaches to RAG applications.
 
 ## Project Goal
 
-This is an educational project for systematically learning Spring AI and the architecture of RAG applications in Java.
+The goal of the project is to study Spring AI and the architecture of RAG applications in Java step by step, using a specific scenario.
 
-The primary focus is on understanding system components, the verifiability of behavior, testing, and the adoption or   
-critical analysis of engineering decisions.
+The main focus is on separation of responsibilities between components, verifiability of LLM results, error handling, automated testing, and making engineering decisions.
 
 ## License
 
-This project is licensed under the MIT License.
+The project is distributed under the MIT License.
