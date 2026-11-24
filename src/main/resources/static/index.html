@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Checklist Assistant</title>
+
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<main class="container">
+    <h1>Помощник курьера</h1>
+
+    <p class="description">
+        Загрузите фотографию вопроса из чек-листа,
+        чтобы получить правильный ответ.
+    </p>
+
+    <form id="question-form">
+        <label for="image-input">
+            Фотография вопроса
+        </label>
+
+        <input
+                type="file"
+                id="image-input"
+                name="image"
+                accept="image/*"
+                required
+        >
+
+        <button type="submit" id="submit-button">
+            Найти ответ
+        </button>
+    </form>
+
+    <section id="result" hidden>
+        <h2>Результат</h2>
+
+        <p id="match-confidence"></p>
+
+        <div id="question"></div>
+
+        <h3>Правильные варианты ответа</h3>
+
+        <ul id="correct-options"></ul>
+    </section>
+
+    <p id="status" role="status"></p>
+</main>
+
+<script src="/js/app.js" defer></script>
+</body>
+</html>
