@@ -32,10 +32,22 @@ The project demonstrates how structured data, vector search, language models, an
 - Validating the identification result against the list of retrieved candidates.
 - Handling ambiguous and unidentified questions.
 - Extracting question text and answer options from a screenshot using a Vision model.
-- Supporting both text and image input.
+- Supporting both text and image input through the REST API.
+- A browser-based UI for uploading a checklist screenshot and viewing the identified question and correct answer options.
 - Handling errors from external AI providers and safely returning errors through the HTTP API.
 - Automated tests for components and screenshot recognition scenarios.
 - Local application configuration using micro-env.
+
+## Web UI
+
+The application includes a lightweight browser interface served by Spring Boot. It lets a user:
+
+1. Open the application in a browser at `http://localhost:8080/`.
+2. Select a screenshot of a checklist question.
+3. Submit the image for recognition and identification.
+4. View the canonical question, identification confidence (when available), and the full text of the correct answer options.
+
+The page displays processing status and errors. It does not submit answers to the original checklist service, grade selected answers, or automate the checklist. The current UI accepts an image; text-based identification remains available through the REST API.
 
 ## How Question Identification Works
 
@@ -257,6 +269,10 @@ The following parameters are used:
 | `SCREENSHOT_MODEL`   | Model used for screenshot recognition |
 
 Default values for some parameters are provided in `application.properties`.
+
+## Running the Application
+
+Start PostgreSQL and PGVector first. After starting the Spring Boot application, open `http://localhost:8080/` in a browser to use the web UI.
 
 ## Starting PostgreSQL and PGVector
 
