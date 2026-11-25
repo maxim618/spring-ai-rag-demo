@@ -1,5 +1,7 @@
 package max.example.spring_ai_rag_demo.checklist;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,6 +20,9 @@ import java.util.Map;
 @RestController
 @RequestMapping("/checklist/questions")
 public class ChecklistQuestionController {
+
+    private static final Logger logger =
+            LoggerFactory.getLogger(ChecklistQuestionController.class);
 
     private final ChecklistService checklistService;
     private final ScreenshotQuestionExtractor screenshotQuestionExtractor;
@@ -61,6 +66,13 @@ public class ChecklistQuestionController {
             return ResponseEntity.badRequest().body(Map.of("error", "Screenshot must not be empty"));
         }
 
+        logger.debug(
+                "Received screenshot upload: filename='{}', contentType='{}', size={} bytes",
+                image.getOriginalFilename(),
+                image.getContentType(),
+                image.getSize()
+        );
+
         final ScreenshotQuestionExtractor.ExtractedScreenshotQuestion extracted;
         try {
             extracted = screenshotQuestionExtractor.extractTopmostQuestion(
@@ -79,12 +91,19 @@ public class ChecklistQuestionController {
             );
         }
 
+        logger.debug(
+                "Screenshot extraction result: questionText='{}', answerOptions={}",
+                extracted.text(),
+                extracted.answerOptions()
+        );
+
         NormalizedChecklistQuestion question = new NormalizedChecklistQuestion(
                 extracted.text(),
                 extracted.answerOptions(),
                 List.of()
         );
         ChecklistQuestionLookupResult result = checklistService.identifyQuestion(question);
+        logger.debug("Screenshot lookup result: {}", result);
 
         ScreenshotQuestionIdentificationResponse response =
                 new ScreenshotQuestionIdentificationResponse(
