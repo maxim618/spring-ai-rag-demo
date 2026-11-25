@@ -37,6 +37,14 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
                 .map(LlmQuestionSemanticMatcher::toCandidate)
                 .toList();
 
+        logger.debug(
+                "Semantic matcher input: questionText='{}', answerOptions={}, selectedOptions={}, candidateQuestionIds={}",
+                question.text(),
+                question.answerOptions(),
+                question.selectedOptions(),
+                idsOf(availableCandidates)
+        );
+
         if (availableCandidates.isEmpty()) {
             return notIdentified(
                     List.of(),
@@ -94,7 +102,17 @@ public final class LlmQuestionSemanticMatcher implements QuestionSemanticMatcher
                     exception
             );
         }
-        return toResult(decision, availableCandidates);
+        QuestionIdentificationResult result = toResult(decision, availableCandidates);
+        logger.debug(
+                "Semantic matcher decision: modelStatus={}, modelQuestionId={}, modelCandidateIds={}, modelReason={}, modelConfidence={}, mappedResult={}",
+                decision.status(),
+                decision.questionId(),
+                decision.candidateQuestionIds(),
+                decision.reason(),
+                decision.confidence(),
+                result
+        );
+        return result;
     }
 
     private static String userPrompt(
