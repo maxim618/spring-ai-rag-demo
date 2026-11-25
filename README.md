@@ -109,19 +109,16 @@ If the topmost question cannot be reliably read, the application returns an appr
 
 In the current implementation, one screenshot is processed per request, and the first (topmost) question is identified.
 
-## Using the Web Interface
+## Web Interface
 
-The application includes a simple browser interface for identifying a checklist question from a screenshot.
+Users can:
+1. Select a screenshot of a checklist question.
+2. Submit the image for recognition and identification.
+3. View the canonical wording of the question, the identification confidence score (if available), and the full text of the correct answer options.
 
-1. Start PostgreSQL with PGVector and run the Spring Boot application.
-2. Open `http://localhost:8080/` in a browser. If the application runs on another computer in your local network, open its address and port instead.
-3. Select an image containing the checklist question and click **Find answer**.
-4. Wait while the application sends the image to the screenshot identification endpoint.
-5. Review the result: the canonical question from the knowledge base, the identification confidence (when returned), and the full text of the correct answer options.
+The interface displays the processing status and error messages.
 
-The interface displays a processing status and reports errors when the image cannot be processed or the question cannot be reliably identified.
-
-The current UI accepts an image only. It identifies the first (topmost) question in the screenshot and does not submit answers to the original checklist service or grade a courier's selections. The correct options are retrieved from the canonical knowledge-base record after identification; they are not generated as an independent answer by the browser UI.
+The current UI supports image upload only.
 
 ## Architecture
 
