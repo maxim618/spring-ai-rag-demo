@@ -1,5 +1,7 @@
 package max.example.spring_ai_rag_demo.checklist;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -10,6 +12,8 @@ import java.util.OptionalDouble;
 
 @Service
 public class ChecklistService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ChecklistService.class);
 
     private final ChecklistKnowledgeBaseRetriever retriever;
     private final ChecklistQuestionIdentifier identifier;
@@ -52,11 +56,28 @@ public class ChecklistService {
     ) {
         Objects.requireNonNull(question, "question");
 
+        logger.debug(
+                "Question identification input: text='{}', answerOptions={}, selectedOptions={}",
+                question.text(),
+                question.answerOptions(),
+                question.selectedOptions()
+        );
+
         List<org.springframework.ai.document.Document> candidates =
                 retriever.retrieve(question.text());
 
+        logger.debug(
+                "Question retrieval returned {} candidate documents with IDs={}",
+                candidates.size(),
+                candidates.stream()
+                        .map(document -> document.getMetadata().get("questionId"))
+                        .toList()
+        );
+
         QuestionIdentificationResult identification =
                 identifier.identify(question, candidates);
+
+        logger.debug("Question identification result: {}", identification);
 
         if (identification instanceof QuestionIdentificationResult.Identified identified) {
             ChecklistQuestion sourceQuestion = questionsById.get(identified.questionId());
