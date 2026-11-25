@@ -38,16 +38,18 @@ The project demonstrates how structured data, vector search, language models, an
 - Automated tests for components and screenshot recognition scenarios.
 - Local application configuration using micro-env.
 
-## Web UI
+## Web Interface
 
-The application includes a lightweight browser interface served by Spring Boot. It lets a user:
+![web-ui.jpg](docs%2Fimages%2Fweb-ui.jpg)
 
-1. Open the application in a browser at `http://localhost:8080/`.
-2. Select a screenshot of a checklist question.
-3. Submit the image for recognition and identification.
-4. View the canonical question, identification confidence (when available), and the full text of the correct answer options.
+Users can:
+1. Select a screenshot of a checklist question.
+2. Submit the image for recognition and identification.
+3. View the canonical wording of the question, the identification confidence score (if available), and the full text of the correct answer options.
 
-The page displays processing status and errors. It does not submit answers to the original checklist service, grade selected answers, or automate the checklist. The current UI accepts an image; text-based identification remains available through the REST API.
+The interface displays the processing status and error messages.
+
+The current UI supports image upload only.
 
 ## How Question Identification Works
 
@@ -108,17 +110,6 @@ The same identification pipeline is then applied:
 If the topmost question cannot be reliably read, the application returns an appropriate error instead of attempting to identify another question in the image.
 
 In the current implementation, one screenshot is processed per request, and the first (topmost) question is identified.
-
-## Web Interface
-
-Users can:
-1. Select a screenshot of a checklist question.
-2. Submit the image for recognition and identification.
-3. View the canonical wording of the question, the identification confidence score (if available), and the full text of the correct answer options.
-
-The interface displays the processing status and error messages.
-
-The current UI supports image upload only.
 
 ## Architecture
 
