@@ -47,10 +47,16 @@ form.addEventListener("submit", async (event) => {
         const data = await response.json();
 
         if (!response.ok) {
+            console.error("HTTP status:", response.status);
+            console.error("Backend response:", data);
+
             const message = data.error
+                || JSON.stringify(data, null, 2)
                 || "Не удалось определить правильный ответ.";
 
-            throw new Error(message);
+            throw new Error(
+                `HTTP ${response.status}: ${message}`
+            );
         }
 
         const identification = data.identification;
